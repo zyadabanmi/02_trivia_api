@@ -2,7 +2,8 @@ import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-import random
+from random import choice
+
 
 from models import setup_db, Question, Category
 
@@ -34,9 +35,7 @@ def create_app(test_config=None):
   '''
   @app.route('/categories')
   def get_categories():
-      categories = {}
-      for category in Category.query.all():
-          categories[category.id] = category.type
+      categories = {category.id:category.type for category in Category.query.all()}
       return jsonify({
       'categories': categories,
     })
@@ -58,16 +57,14 @@ def create_app(test_config=None):
   '''
   @app.route('/questions')
   def get_paginated_questions():
-      categories = {}
-      for category in Category.query.all():
-          categories[category.id] = category.type
+      categories = {category.id:category.type for category in Category.query.all()}
       page = request.args.get('page', 1, type=int)
       start =  (page - 1) * QUESTIONS_PER_PAGE
       end = start + QUESTIONS_PER_PAGE
       questions = [question.format() for question in Question.query.order_by(Question.id).all()][start:end]
       return jsonify({
       'questions': questions,
-      'totalQuestions': len(Question.query.all()),
+      'total_questions': len(Question.query.all()),
       'categories': categories,
       'currentCategory': 1
     })
@@ -80,7 +77,14 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
-
+  @app.route('/questions/<int:question_id>', methods=['DELETE'])
+  def delete_question(question_id):
+      question = Question.query.filter(Question.id == question_id).one_or_none()
+      question.delete()
+      return jsonify({
+        'success': True,
+        'deleted': question_id
+      })
   '''
   @TODO: 
   Create an endpoint to POST a new question, 
@@ -91,6 +95,16 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
+  @app.route('/questions', methods=['POST'])
+  def create_question():
+      new_question = request.get_json()
+      question = Question(new_question['question'], new_question['answer'], new_question['category'], new_question['difficulty'])
+      question.insert()
+      return jsonify({
+        'success': True,
+        'question': new_question
+      })
+      
 
   '''
   @TODO: 
@@ -102,6 +116,15 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+  @app.route('/questions/search', methods=['POST'])
+  def search_questions():
+      search_term = "%{}%".format(request.get_json()['searchTerm'])
+      questions = [question.format() for question in Question.query.filter(Question.question.ilike(search_term)).all()]
+      return jsonify({
+        'questions':questions,
+        'total_questions': len(questions),
+        'current_category': 1
+      })
 
   '''
   @TODO: 
@@ -111,6 +134,14 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
+  @app.route('/categories/<int:category_id>/questions')
+  def get_categories_by_id(category_id):
+      questions = [question.format() for question in Question.query.filter(Question.category == category_id).all()]
+      return jsonify({
+        'questions': questions,
+        'total_questions': len(questions),
+        'current_category': category_id
+      })
 
 
   '''
@@ -124,6 +155,21 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route('/quizzes', methods=['POST'])
+  def get_next_question():
+      previous_questions = request.get_json()['previous_questions']
+      quiz_category = request.get_json()['quiz_category']
+      questions = [question.format() for question in Question.query.filter(Question.category == quiz_category['id']).all()]
+      remaining_questions = []
+      
+      for question in questions:
+            if (question['id'] not in previous_questions):
+                  remaining_questions.append(question)
+                  
+      return jsonify({
+        'question': choice(remaining_questions) if len(remaining_questions) else ''
+      })
+      
 
   '''
   @TODO: 

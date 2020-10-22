@@ -45,9 +45,13 @@ class QuestionView extends Component {
   }
 
   createPagination(){
+    console.log('paginating')
     let pageNumbers = [];
+    console.log(this.state.totalQuestions)
     let maxPage = Math.ceil(this.state.totalQuestions / 10)
+    console.log(maxPage)
     for (let i = 1; i <= maxPage; i++) {
+      console.log('page');
       pageNumbers.push(
         <span
           key={i}
@@ -78,7 +82,7 @@ class QuestionView extends Component {
 
   submitSearch = (searchTerm) => {
     $.ajax({
-      url: `/questions`, //TODO: update request URL
+      url: `/questions/search`, //TODO: update request URL
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
