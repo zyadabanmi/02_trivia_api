@@ -35,10 +35,13 @@ def create_app(test_config=None):
   '''
   @app.route('/categories')
   def get_categories():
-      categories = {category.id:category.type for category in Category.query.all()}
-      return jsonify({
-      'categories': categories,
+      try:
+        categories = {category.id:category.type for category in Category.query.all()} 
+        return jsonify({
+          'categories': categories,
     })
+      except:
+        abort(422)
       
   
 
@@ -62,13 +65,16 @@ def create_app(test_config=None):
       start =  (page - 1) * QUESTIONS_PER_PAGE
       end = start + QUESTIONS_PER_PAGE
       questions = [question.format() for question in Question.query.order_by(Question.id).all()][start:end]
-      return jsonify({
-      'questions': questions,
-      'total_questions': len(Question.query.all()),
-      'categories': categories,
-      'currentCategory': 1
-    })
         
+      if (len(questions) == 0):
+           abort(404)
+            
+      return jsonify({
+          'questions': questions,
+          'total_questions': len(Question.query.all()),
+          'categories': categories,
+          'currentCategory': 1
+    })
 
   '''
   @TODO: 
@@ -157,6 +163,7 @@ def create_app(test_config=None):
   '''
   @app.route('/quizzes', methods=['POST'])
   def get_next_question():
+        # refactore for all catgeoris 
       previous_questions = request.get_json()['previous_questions']
       quiz_category = request.get_json()['quiz_category']
       questions = [question.format() for question in Question.query.filter(Question.category == quiz_category['id']).all()]
@@ -176,6 +183,33 @@ def create_app(test_config=None):
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
+  @app.errorhandler(400)
+  def bad_request(error):
+      return jsonify({
+        'error': 400,
+        'message': 'Bad request'
+      }), 400
+      
+  @app.errorhandler(404)
+  def not_found(error):
+      return jsonify({
+        'error': 404,
+        'message': 'resource not found'
+      }), 404
+      
+  @app.errorhandler(422)
+  def unprocessable_entity(error):
+      return jsonify({
+        'error': 422,
+        'message': 'unprocessable entity'
+      }), 422
+  
+  @app.errorhandler(500)
+  def internal_server_error(error):
+      return jsonify({
+        'error': 500,
+        'message': 'Internal server error'
+      }), 500
   
   return app
 
