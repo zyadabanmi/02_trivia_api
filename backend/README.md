@@ -261,6 +261,13 @@ POST '/quizzes'
     }
 }
 
+DELETE '/questions/<int:question_id>'
+- Delete question based on a given id
+- Request Arguments: Parameter named 'question_id'
+- Returns: json object containing deleted, success
+
+{"deleted":23,"success":true}
+
 ```
 
 ## Testing
