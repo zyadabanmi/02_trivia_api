@@ -37,6 +37,7 @@ def create_app(test_config=None):
   def get_categories():
       try:
         categories = {category.id:category.type for category in Category.query.all()} 
+        
         return jsonify({
           'categories': categories,
     })
@@ -87,7 +88,7 @@ def create_app(test_config=None):
   def delete_question(question_id):
       question = Question.query.filter(Question.id == question_id).one_or_none()
       
-      if (len(question) == 0):
+      if question is None:
            abort(404)
             
       question.delete()
@@ -108,6 +109,10 @@ def create_app(test_config=None):
   @app.route('/questions', methods=['POST'])
   def create_question():
       new_question = request.get_json()
+      
+      if(len(request.get_json()) != 4):
+            abort(400)
+            
       question = Question(new_question['question'], new_question['answer'], new_question['category'], new_question['difficulty'])
       question.insert()
       return jsonify({
@@ -128,6 +133,8 @@ def create_app(test_config=None):
   '''
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
+      if(len(request.get_json()) == 0):
+            abort(400)
       search_term = "%{}%".format(request.get_json()['searchTerm'])
       questions = [question.format() for question in Question.query.filter(Question.question.ilike(search_term)).all()]
       return jsonify({
@@ -172,6 +179,8 @@ def create_app(test_config=None):
   @app.route('/quizzes', methods=['POST'])
   def get_next_question():
         # refactore for all catgeoris 
+      if(len(request.get_json()) == 0):
+            abort(400)
       previous_questions = request.get_json()['previous_questions']
       quiz_category = request.get_json()['quiz_category']
       questions = [question.format() for question in Question.query.filter(Question.category == quiz_category['id']).all()]
