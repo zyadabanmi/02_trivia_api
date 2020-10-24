@@ -183,7 +183,11 @@ def create_app(test_config=None):
             abort(400)
       previous_questions = request.get_json()['previous_questions']
       quiz_category = request.get_json()['quiz_category']
-      questions = [question.format() for question in Question.query.filter(Question.category == quiz_category['id']).all()]
+      if(quiz_category['type'] == 'click'):
+            questions = [question.format() for question in Question.query.all()]
+      else:
+            questions = [question.format() for question in Question.query.filter(Question.category == quiz_category['id']).all()]
+            
       remaining_questions = []
       
       for question in questions:
