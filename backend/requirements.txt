@@ -1,4 +1,4 @@
-aniso8601==6.0.0
+aniso8601==6.
 Click==7.0
 Flask==1.0.3
 Flask-Cors==3.0.7

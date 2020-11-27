@@ -1,11 +1,11 @@
 import os
 from flask import Flask, request, abort, jsonify
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from random import choice
-
-
 from models import setup_db, Question, Category
+
 
 QUESTIONS_PER_PAGE = 10
 
